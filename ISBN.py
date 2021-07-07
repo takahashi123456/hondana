@@ -5,6 +5,8 @@ from pyzbar.pyzbar import ZBarSymbol
 import re
 import numpy as np
 import math
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 #####################################################
 # 機能　ISBNバーコードを自動撮影し、コードを返す
 # 入口　convert_image_to_code()
@@ -54,25 +56,42 @@ def convert_image_to_code():
         if keyInput == 27: # when ESC
             break
 
+def get_item_data_from_isbn():
+    #seleniumの準備
+    options = Options()
+    options.add_argument('--headless')
+    #ドライバーの位置を指定
+    driver = webdriver.Chrome('/Users/kanaokayuuichirou/Desktop/chromedriver',options=options)
+
+    #ここにURL
+    driver.get('https://www.kinokuniya.co.jp/disp/CKnDetailSearchForm.jsp?ptk=01')
+    search_bar = driver.find_element_by_name ('gtin')
+    search_bar.send_keys(code)
+
+    #ここからスクレイピングについて記述
+    find = driver.find_element_by_name("SEARCH")
+    find.click()
+    driver.implicitly_wait(20)
+
+    GetURL = driver.find_element_by_css_selector('h3 > a')
+    GetURL.click()
+
+    title = driver.find_element_by_css_selector('h3')
+    print(title.text)
+    print(title.text.splitlines())
+    for i in title.text.splitlines():
+        print(i)
+    author = driver.find_element_by_css_selector("div.infobox > ul > li > a")
+    print(author.text)
+
+    price = driver.find_element_by_css_selector("span.sale_price")
+    print(price.text)
+    driver.quit()
+
 if __name__ == '__main__':
 
     code = convert_image_to_code()
     print(code)
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-options = Options()
-options.add_argument('--headless')
-driver = webdriver.Chrome('/Users/kanaokayuuichirou/Desktop/chromedriver',options=options)
-
-driver.get('https://books.google.co.jp/')
-search_bar = driver. find_element_by_name ('q')
-search_bar.send_keys(code)
-search_bar.submit()
-
-for elem_h3 in driver.find_elements_by_xpath('//a/h3'):
-    elem_a = elem_h3.find_element_by_xpath('..')  
-    print(elem_h3.text)
-    print(elem_a.get_attribute('href'))
+    get_item_data_from_isbn()
 
 
